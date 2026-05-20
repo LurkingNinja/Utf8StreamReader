@@ -29,6 +29,16 @@ jobs:
         with:
           name: nuget
           path: ./publish/
+      # push nuget
+      - name: NuGet login (OIDC)
+        uses: NuGet/login@8d196754b4036150537f80ac539e15c2f1028841 # v1.2.0
+        id: login
+        with:
+          user: ${{ secrets.NUGET_USER }}
+      - run: dotnet nuget push "./publish/*.nupkg" --skip-duplicate -s https://api.nuget.org/v3/index.json -k "${NUGET_KEY}"
+        if: ${{ !inputs.dry-run }}
+        env:
+          NUGET_KEY: ${{ steps.login.outputs.NUGET_API_KEY }}
 
   # release
   create-release:
@@ -41,6 +51,6 @@ jobs:
       commit-id: ""
       dry-run: ${{ inputs.dry-run }}
       tag: ${{ inputs.tag }}
-      nuget-push: true
+      nuget-push: false
       release-upload: false
     secrets: inherit
